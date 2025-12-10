@@ -9,6 +9,7 @@ services:
       - .:/var/www/html
     depends_on:
       - db
+      - redis
     environment:
       - APP_ENV=local
       - DB_CONNECTION=pgsql
@@ -17,6 +18,10 @@ services:
       - DB_DATABASE=laravel
       - DB_USERNAME=laravel
       - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
 
   db:
     image: postgres:13
@@ -27,5 +32,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
 volumes:
   postgres_data:
+  redis_data:

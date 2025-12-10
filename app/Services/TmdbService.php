@@ -4,12 +4,14 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class TmdbService
 {
     private $apiKey;
     private $baseUrl;
     private $imageBaseUrl;
+    private const CACHE_TTL = 3600; // 1 hora em segundos
 
     public function __construct()
     {
@@ -23,23 +25,27 @@ class TmdbService
      */
     public function searchMovies($query, $page = 1)
     {
-        try {
-            $response = Http::get("{$this->baseUrl}/search/movie", [
-                'api_key' => $this->apiKey,
-                'language' => 'pt-BR',
-                'query' => $query,
-                'page' => $page,
-            ]);
+        $cacheKey = "tmdb_search_" . md5($query) . "_page_{$page}";
 
-            if ($response->successful()) {
-                return $response->json();
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($query, $page) {
+            try {
+                $response = Http::get("{$this->baseUrl}/search/movie", [
+                    'api_key' => $this->apiKey,
+                    'language' => 'pt-BR',
+                    'query' => $query,
+                    'page' => $page,
+                ]);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                return null;
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar filmes: ' . $e->getMessage());
+                return null;
             }
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Erro ao buscar filmes: ' . $e->getMessage());
-            return null;
-        }
+        });
     }
 
     /**
@@ -47,21 +53,25 @@ class TmdbService
      */
     public function getMovieDetails($movieId)
     {
-        try {
-            $response = Http::get("{$this->baseUrl}/movie/{$movieId}", [
-                'api_key' => $this->apiKey,
-                'language' => 'pt-BR',
-            ]);
+        $cacheKey = "tmdb_movie_details_{$movieId}";
 
-            if ($response->successful()) {
-                return $response->json();
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($movieId) {
+            try {
+                $response = Http::get("{$this->baseUrl}/movie/{$movieId}", [
+                    'api_key' => $this->apiKey,
+                    'language' => 'pt-BR',
+                ]);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                return null;
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar detalhes do filme: ' . $e->getMessage());
+                return null;
             }
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Erro ao buscar detalhes do filme: ' . $e->getMessage());
-            return null;
-        }
+        });
     }
 
     /**
@@ -69,21 +79,23 @@ class TmdbService
      */
     public function getGenres()
     {
-        try {
-            $response = Http::get("{$this->baseUrl}/genre/movie/list", [
-                'api_key' => $this->apiKey,
-                'language' => 'pt-BR',
-            ]);
+        return Cache::remember('tmdb_genres', self::CACHE_TTL * 24, function () {
+            try {
+                $response = Http::get("{$this->baseUrl}/genre/movie/list", [
+                    'api_key' => $this->apiKey,
+                    'language' => 'pt-BR',
+                ]);
 
-            if ($response->successful()) {
-                return $response->json()['genres'] ?? [];
+                if ($response->successful()) {
+                    return $response->json()['genres'] ?? [];
+                }
+
+                return [];
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar gêneros: ' . $e->getMessage());
+                return [];
             }
-
-            return [];
-        } catch (\Exception $e) {
-            Log::error('Erro ao buscar gêneros: ' . $e->getMessage());
-            return [];
-        }
+        });
     }
 
     /**
@@ -125,45 +137,49 @@ class TmdbService
      */
     public function discoverMovies($filters = [], $page = 1)
     {
-        try {
-            $params = [
-                'api_key' => $this->apiKey,
-                'language' => 'pt-BR',
-                'page' => $page,
-                'sort_by' => $filters['sort_by'] ?? 'popularity.desc',
-            ];
+        $cacheKey = "tmdb_discover_page_{$page}_" . md5(json_encode($filters));
 
-            // Filtro por gênero
-            if (!empty($filters['genre'])) {
-                $params['with_genres'] = $filters['genre'];
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($filters, $page) {
+            try {
+                $params = [
+                    'api_key' => $this->apiKey,
+                    'language' => 'pt-BR',
+                    'page' => $page,
+                    'sort_by' => $filters['sort_by'] ?? 'popularity.desc',
+                ];
+
+                // Filtro por gênero
+                if (!empty($filters['genre'])) {
+                    $params['with_genres'] = $filters['genre'];
+                }
+
+                // Filtro por ano
+                if (!empty($filters['year'])) {
+                    $params['primary_release_year'] = $filters['year'];
+                }
+
+                // Filtro por nota mínima
+                if (!empty($filters['vote_average_gte'])) {
+                    $params['vote_average.gte'] = $filters['vote_average_gte'];
+                }
+
+                // Filtro por nota máxima
+                if (!empty($filters['vote_average_lte'])) {
+                    $params['vote_average.lte'] = $filters['vote_average_lte'];
+                }
+
+                $response = Http::get("{$this->baseUrl}/discover/movie", $params);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                return null;
+            } catch (\Exception $e) {
+                Log::error('Erro ao descobrir filmes: ' . $e->getMessage());
+                return null;
             }
-
-            // Filtro por ano
-            if (!empty($filters['year'])) {
-                $params['primary_release_year'] = $filters['year'];
-            }
-
-            // Filtro por nota mínima
-            if (!empty($filters['vote_average_gte'])) {
-                $params['vote_average.gte'] = $filters['vote_average_gte'];
-            }
-
-            // Filtro por nota máxima
-            if (!empty($filters['vote_average_lte'])) {
-                $params['vote_average.lte'] = $filters['vote_average_lte'];
-            }
-
-            $response = Http::get("{$this->baseUrl}/discover/movie", $params);
-
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Erro ao descobrir filmes: ' . $e->getMessage());
-            return null;
-        }
+        });
     }
 }
 

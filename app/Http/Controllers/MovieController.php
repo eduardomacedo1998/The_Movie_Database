@@ -6,6 +6,7 @@ use App\Models\Favorite;
 use App\Services\TmdbService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class MovieController extends Controller
 {
@@ -100,23 +101,35 @@ class MovieController extends Controller
      */
     public function favorites(Request $request)
     {
-        $query = Favorite::where('user_id', Auth::id());
+        $userId = Auth::id();
+        $genreFilter = $request->get('genre');
 
-        // Filtro por gênero
-        if ($request->has('genre') && !empty($request->genre)) {
-            $query->whereJsonContains('genres', $request->genre);
-        }
+        // Cache da query de favoritos por 5 minutos
+        $cacheKey = "user_favorites_{$userId}_genre_" . ($genreFilter ?: 'all');
 
-        $favorites = $query->orderBy('created_at', 'desc')->get();
+        $favorites = Cache::remember($cacheKey, 300, function () use ($userId, $genreFilter) {
+            $query = Favorite::where('user_id', $userId)
+                ->with('user') // Eager loading
+                ->orderBy('created_at', 'desc');
 
-        // Buscar todos os gêneros únicos dos favoritos
-        $allGenres = Favorite::where('user_id', Auth::id())
-            ->get()
-            ->pluck('genres')
-            ->flatten()
-            ->unique()
-            ->sort()
-            ->values();
+            if ($genreFilter) {
+                $query->whereJsonContains('genres', $genreFilter);
+            }
+
+            return $query->get();
+        });
+
+        // Cache dos gêneros únicos por 1 hora
+        $genresCacheKey = "user_genres_{$userId}";
+        $allGenres = Cache::remember($genresCacheKey, 3600, function () use ($userId) {
+            return Favorite::where('user_id', $userId)
+                ->get()
+                ->pluck('genres')
+                ->flatten()
+                ->unique()
+                ->sort()
+                ->values();
+        });
 
         // Se for requisição AJAX, retorna JSON para uso no script
         if ($request->wantsJson() || $request->ajax()) {
@@ -133,7 +146,7 @@ class MovieController extends Controller
         return view('movies.favorites', [
             'favorites' => $favorites,
             'genres' => $allGenres,
-            'selectedGenre' => $request->genre,
+            'selectedGenre' => $genreFilter,
         ]);
     }
 
@@ -166,6 +179,10 @@ class MovieController extends Controller
         $favorite = Favorite::addFavorite($userId, $movieData);
 
         if ($favorite) {
+            // Limpar cache dos favoritos do usuário
+            Cache::forget("user_favorites_{$userId}_genre_all");
+            Cache::forget("user_genres_{$userId}");
+
             return response()->json([
                 'success' => true,
                 'message' => 'Filme adicionado aos favoritos!',
@@ -196,6 +213,11 @@ class MovieController extends Controller
         }
 
         $favorite->delete();
+
+        // Limpar cache dos favoritos do usuário
+        $userId = Auth::id();
+        Cache::forget("user_favorites_{$userId}_genre_all");
+        Cache::forget("user_genres_{$userId}");
 
         return response()->json([
             'success' => true,
