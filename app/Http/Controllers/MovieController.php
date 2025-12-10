@@ -26,9 +26,10 @@ class MovieController extends Controller
         $page = $request->input('page', 1);
 
         // Verificar se há filtros aplicados
-        $hasFilters = $request->hasAny(['genre', 'year', 'vote_average_gte', 'sort_by']);
+        $hasFilters = $request->hasAny(['genre', 'year', 'vote_average_gte', 'sort_by', 'no_image', 'no_description']);
 
-        if ($hasFilters) {// Usar discover com filtros
+        if ($hasFilters) {
+            // Usar discover com filtros
             $filters = [
                 'genre' => $request->input('genre'), // Gênero
                 'year' => $request->input('year'), // Ano de lançamento
@@ -40,12 +41,17 @@ class MovieController extends Controller
             $movies = $this->tmdbService->getPopularMovies($page);
         }
 
+        // Aplicar filtros locais para filmes sem imagem ou descrição
+        if ($movies && isset($movies['results'])) {
+            $movies = $this->tmdbService->filterMovies($movies, $request->only(['no_image', 'no_description']));
+        }
+
         return view('movies.home', [
             'movies' => $movies['results'] ?? [],
             'genres' => $genres,
             'totalPages' => $movies['total_pages'] ?? 1,
             'currentPage' => $page,
-            'filters' => $request->only(['genre', 'year', 'vote_average_gte', 'sort_by']),
+            'filters' => $request->only(['genre', 'year', 'vote_average_gte', 'sort_by', 'no_image', 'no_description']),
         ]);
     }
 
@@ -59,7 +65,7 @@ class MovieController extends Controller
         $genres = $this->tmdbService->getGenres();
 
         // Se não há query, mas há filtros, usar discover
-        if (empty($query) && $request->hasAny(['genre', 'year', 'vote_average_gte', 'sort_by'])) {
+        if (empty($query) && $request->hasAny(['genre', 'year', 'vote_average_gte', 'sort_by', 'no_image', 'no_description'])) {
             $filters = [
                 'genre' => $request->input('genre'),
                 'year' => $request->input('year'),
@@ -67,6 +73,11 @@ class MovieController extends Controller
                 'sort_by' => $request->input('sort_by', 'popularity.desc'),
             ];
             $searchResults = $this->tmdbService->discoverMovies($filters, $page);
+
+            // Aplicar filtros locais para filmes sem imagem ou descrição
+            if ($searchResults && isset($searchResults['results'])) {
+                $searchResults = $this->tmdbService->filterMovies($searchResults, $request->only(['no_image', 'no_description']));
+            }
             
             return view('movies.search', [
                 'movies' => $searchResults['results'] ?? [],
@@ -75,7 +86,7 @@ class MovieController extends Controller
                 'currentPage' => $page,
                 'totalPages' => $searchResults['total_pages'] ?? 1,
                 'genres' => $genres,
-                'filters' => $request->only(['genre', 'year', 'vote_average_gte', 'sort_by']),
+                'filters' => $request->only(['genre', 'year', 'vote_average_gte', 'sort_by', 'no_image', 'no_description']),
             ]);
         }
 
@@ -93,6 +104,38 @@ class MovieController extends Controller
             'totalPages' => $searchResults['total_pages'] ?? 1,
             'genres' => $genres,
             'filters' => [],
+        ]);
+    }
+
+    /**
+     * Exibe estatísticas sobre filmes com dados faltantes
+     */
+    public function stats(Request $request)
+    {
+        // Buscar filmes populares para análise
+        $popularMovies = $this->tmdbService->getPopularMovies(1, 5); // Buscar mais páginas para análise
+        $stats = $this->tmdbService->countMoviesWithMissingData($popularMovies);
+
+        // Buscar alguns filmes por filtros para análise adicional
+        $discoverMovies = $this->tmdbService->discoverMovies(['sort_by' => 'popularity.desc'], 1);
+        $discoverStats = $this->tmdbService->countMoviesWithMissingData($discoverMovies);
+
+        // Estatísticas de favoritos do usuário
+        $userFavorites = Favorite::where('user_id', Auth::id())->get();
+        $favoritesStats = [
+            'total' => $userFavorites->count(),
+            'with_image' => $userFavorites->filter(function($fav) {
+                return !empty($fav->poster_path);
+            })->count(),
+            'with_description' => $userFavorites->filter(function($fav) {
+                return !empty($fav->genres) && is_array($fav->genres) && count($fav->genres) > 0;
+            })->count(),
+        ];
+
+        return view('movies.stats', [
+            'popularStats' => $stats,
+            'discoverStats' => $discoverStats,
+            'favoritesStats' => $favoritesStats,
         ]);
     }
 

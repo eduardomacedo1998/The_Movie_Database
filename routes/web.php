@@ -32,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [MovieController::class, 'index'])->name('home');
     Route::get('/search', [MovieController::class, 'search'])->name('movies.search');
     Route::get('/favorites', [MovieController::class, 'favorites'])->name('movies.favorites');
+    Route::get('/stats', [MovieController::class, 'stats'])->name('movies.stats');
     Route::post('/favorites/{tmdbId}', [MovieController::class, 'addFavorite'])->name('movies.favorite');
     Route::delete('/favorites/{id}', [MovieController::class, 'removeFavorite'])->name('movies.unfavorite');
 });

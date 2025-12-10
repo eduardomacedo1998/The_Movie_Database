@@ -104,9 +104,54 @@ class TmdbService
     public function getImageUrl($path)
     {
         if (!$path) {
-            return 'https://via.placeholder.com/500x750?text=Sem+Imagem';
+            return 'https://via.placeholder.com/300x450/cccccc/666666?text=Sem+Imagem';
         }
         return $this->imageBaseUrl . $path;
+    }
+
+    /**
+     * Verifica se um filme tem imagem
+     */
+    public function hasImage($movie)
+    {
+        return !empty($movie['poster_path']);
+    }
+
+    /**
+     * Verifica se um filme tem descrição
+     */
+    public function hasDescription($movie)
+    {
+        return !empty($movie['overview']);
+    }
+
+    /**
+     * Filtra filmes por critérios específicos (usado localmente)
+     */
+    public function filterMovies($movies, $filters)
+    {
+        if (!isset($movies['results'])) {
+            return $movies;
+        }
+
+        $filteredResults = $movies['results'];
+
+        // Filtro: apenas filmes sem imagem
+        if (isset($filters['no_image']) && $filters['no_image']) {
+            $filteredResults = array_filter($filteredResults, function($movie) {
+                return !$this->hasImage($movie);
+            });
+        }
+
+        // Filtro: apenas filmes sem descrição
+        if (isset($filters['no_description']) && $filters['no_description']) {
+            $filteredResults = array_filter($filteredResults, function($movie) {
+                return !$this->hasDescription($movie);
+            });
+        }
+
+        $movies['results'] = array_values($filteredResults);
+        return $movies;
     }
 
     /**
@@ -180,6 +225,36 @@ class TmdbService
                 return null;
             }
         });
+    }
+
+    /**
+     * Conta filmes com dados faltantes
+     */
+    public function countMoviesWithMissingData($movies)
+    {
+        $total = count($movies);
+        $withoutImage = 0;
+        $withoutDescription = 0;
+        $withoutBoth = 0;
+
+        foreach ($movies as $movie) {
+            $hasImage = !empty($movie['poster_path']);
+            $hasDescription = !empty($movie['overview']);
+
+            if (!$hasImage) $withoutImage++;
+            if (!$hasDescription) $withoutDescription++;
+            if (!$hasImage && !$hasDescription) $withoutBoth++;
+        }
+
+        return [
+            'total' => $total,
+            'without_image' => $withoutImage,
+            'without_description' => $withoutDescription,
+            'without_both' => $withoutBoth,
+            'percentage_without_image' => $total > 0 ? round(($withoutImage / $total) * 100, 1) : 0,
+            'percentage_without_description' => $total > 0 ? round(($withoutDescription / $total) * 100, 1) : 0,
+            'percentage_without_both' => $total > 0 ? round(($withoutBoth / $total) * 100, 1) : 0,
+        ];
     }
 }
 

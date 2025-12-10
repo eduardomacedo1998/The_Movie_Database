@@ -145,6 +145,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('movies.stats') ? 'active' : '' }}" href="{{ route('movies.stats') }}">
+                            <i class="fas fa-chart-bar"></i> Estatísticas
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('movies.favorites') ? 'active' : '' }}" href="{{ route('movies.favorites') }}">
                             <i class="fas fa-heart"></i> Favoritos
                         </a>

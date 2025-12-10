@@ -95,6 +95,27 @@
                     </div>
                 </div>
 
+                <!-- Filtros Especiais -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="mb-2">Filtros Especiais</h6>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="no_image" value="1" id="no_image"
+                                {{ isset($filters['no_image']) && $filters['no_image'] ? 'checked' : '' }}>
+                            <label class="form-check-label" for="no_image">
+                                <i class="fas fa-image text-muted"></i> Apenas filmes sem imagem
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="no_description" value="1" id="no_description"
+                                {{ isset($filters['no_description']) && $filters['no_description'] ? 'checked' : '' }}>
+                            <label class="form-check-label" for="no_description">
+                                <i class="fas fa-file-alt text-muted"></i> Apenas filmes sem descrição
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row mt-3">
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary">
@@ -141,6 +162,20 @@
                 <h5 class="movie-title mb-2" title="{{ $movie['title'] }}">
                     {{ $movie['title'] }}
                 </h5>
+
+                <!-- Badges de dados faltantes -->
+                <div class="mb-2">
+                    @if(empty($movie['poster_path']))
+                    <span class="badge bg-warning text-dark me-1">
+                        <i class="fas fa-image"></i> Sem Imagem
+                    </span>
+                    @endif
+                    @if(empty($movie['overview']))
+                    <span class="badge bg-info text-dark">
+                        <i class="fas fa-file-alt"></i> Sem Descrição
+                    </span>
+                    @endif
+                </div>
                 
                 @if(isset($movie['release_date']))
                 <p class="text-muted small mb-2">
