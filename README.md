@@ -1,349 +1,312 @@
-# Documentação Técnica - Movie Manager
+# Guia de Instalação e Execução - Movie Manager
 
-## Visão Geral
+## 📋 Visão Geral
 
-O Movie Manager é uma aplicação Laravel que permite aos usuários gerenciar uma lista de filmes favoritos, utilizando a API do The Movie Database (TMDB) para obter informações sobre filmes.
+Este documento fornece instruções completas para configurar e executar o Movie Manager localmente utilizando Docker e Docker Compose.
 
----
+## 🐳 Pré-requisitos
 
-## Model: Favorite
+Antes de começar, certifique-se de ter instalado em sua máquina:
 
-### Descrição
-O model `Favorite` representa os filmes favoritados pelos usuários no sistema. Ele armazena informações essenciais sobre o filme e mantém o relacionamento com o usuário.
+- **Docker** (versão 20.10 ou superior)
+- **Docker Compose** (versão 1.29 ou superior)
+- **Git** (para clonar o repositório)
 
-### Localização
-`app/Models/Favorite.php`
+### Verificar Instalação
 
-### Propriedades
+```bash
+# Verificar Docker
+docker --version
 
-#### Fillable Attributes
-```php
-protected $fillable = [
-    'user_id',      // ID do usuário que favoritou
-    'tmdb_id',      // ID único do filme na API TMDB
-    'title',        // Título do filme
-    'poster_path',  // Caminho da imagem do poster
-    'release_date', // Data de lançamento
-    'genres',       // Array de gêneros (JSON)
-];
+# Verificar Docker Compose
+docker-compose --version
 ```
 
-#### Casts
-```php
-protected $casts = [
-    'genres' => 'array',           // Converte JSON para array
-    'release_date' => 'date',      // Converte para objeto Carbon
-];
+## 🚀 Instalação e Configuração
+
+### Passo 1: Clonar o Repositório
+
+```bash
+git clone https://github.com/eduardomacedo1998/The_Movie_Database.git
+cd The_Movie_Database
 ```
 
-### Relacionamentos
+### Passo 2: Configurar Variáveis de Ambiente
 
-#### User (belongsTo)
-```php
-public function user()
-{
-    return $this->belongsTo(User::class);
-}
+1. Copie o arquivo de exemplo para criar seu `.env`:
+
+```bash
+cp .env.example .env
 ```
 
-### Métodos Estáticos
+2. Configure as seguintes variáveis no arquivo `.env`:
 
-#### `isFavorite(int $userId, string $tmdbId): bool`
-Verifica se um filme já está nos favoritos do usuário.
+```env
+# Configurações da Aplicação
+APP_NAME="Movie Manager"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
 
-**Parâmetros:**
-- `$userId` (int): ID do usuário
-- `$tmdbId` (string): ID do filme na TMDB
+# Chave da Aplicação (será gerada automaticamente)
+APP_KEY=
 
-**Retorno:** `true` se o filme estiver favoritado, `false` caso contrário
+# Configurações do Banco de Dados PostgreSQL
+DB_CONNECTION=pgsql
+DB_HOST=db
+DB_PORT=5432
+DB_DATABASE=laravel
+DB_USERNAME=laravel
+DB_PASSWORD=password
 
-#### `addFavorite(int $userId, array $movieData): Favorite`
-Adiciona um filme aos favoritos do usuário.
+# Chave da API TMDB (OBRIGATÓRIA)
+TMDB_API_KEY=03474f2e15580abb4ad3ddf6ef7b09bc
+```
 
-**Parâmetros:**
-- `$userId` (int): ID do usuário
-- `$movieData` (array): Dados do filme retornados pela API TMDB
+> **⚠️ IMPORTANTE:** A chave TMDB `03474f2e15580abb4ad3ddf6ef7b09bc` já está configurada no arquivo `.env` fornecido.
 
-**Retorno:** Instância do model Favorite criado
+### Passo 3: Instalar Dependências do Composer
 
-### Estrutura da Tabela
+Antes de construir os containers, instale as dependências PHP do projeto:
 
-| Coluna | Tipo | Descrição | Restrições |
-|--------|------|-----------|------------|
-| `id` | BIGINT | Chave primária | AUTO_INCREMENT |
-| `user_id` | BIGINT | FK para users | NOT NULL, INDEX |
-| `tmdb_id` | VARCHAR | ID na TMDB | NOT NULL, INDEX |
-| `title` | VARCHAR | Título do filme | NOT NULL |
-| `poster_path` | VARCHAR | Caminho do poster | NULLABLE |
-| `release_date` | DATE | Data de lançamento | NULLABLE |
-| `genres` | JSON | Array de gêneros | NULLABLE |
-| `created_at` | TIMESTAMP | Data de criação | NOT NULL |
-| `updated_at` | TIMESTAMP | Data de atualização | NOT NULL |
+```bash
+# Instalar dependências do Composer
+composer install --no-dev --optimize-autoloader
+```
 
-### Constraints
-- **Chave única composta:** `(user_id, tmdb_id)` - Impede duplicatas
-- **Foreign Key:** `user_id` referencia `users.id` com CASCADE DELETE
+Este comando irá:
+- Baixar e instalar todas as dependências PHP listadas no `composer.json`
+- Otimizar o autoloader para melhor performance
+- Preparar o projeto para execução
 
----
+### Passo 4: Construir e Iniciar os Containers
 
-## Controller: MovieController
+```bash
+# Construir e iniciar todos os serviços
+docker-compose up --build -d
+```
 
-### Descrição
-O `MovieController` gerencia todas as operações relacionadas a filmes, incluindo listagem, busca, filtros e gerenciamento de favoritos.
+Este comando irá:
+- Construir a imagem da aplicação Laravel
+- Iniciar o container da aplicação na porta 8000
+- Iniciar o container PostgreSQL na porta 5432
+- Criar volumes persistentes para o banco de dados
 
-### Localização
-`app/Http/Controllers/MovieController.php`
+### Passo 5: Gerar Chave da Aplicação
 
-### Dependências
-- `TmdbService`: Serviço para integração com API TMDB
-- `Favorite`: Model para filmes favoritos
-- `Auth`: Facade para autenticação
+Após os containers estarem rodando, execute o comando para gerar a chave da aplicação:
 
-### Métodos
+```bash
+# Acessar o container da aplicação
+docker-compose exec app php artisan key:generate
+```
 
-#### `index(Request $request): View`
-Página inicial que exibe filmes populares ou filtrados.
+### Passo 6: Configurar o Banco de Dados
 
-**Parâmetros:**
-- `$request` (Request): Requisição HTTP com possíveis filtros
+#### Opção A: Executar Migrations (Recomendado)
 
-**Filtros suportados:**
+```bash
+# Executar migrations para criar as tabelas
+docker-compose exec app php artisan migrate
+```
+
+
+```
+
+### Passo 7: Executar Seeds (Opcional)
+
+Se desejar popular o banco com dados de exemplo:
+
+```bash
+# Executar seeds
+docker-compose exec app php artisan db:seed
+```
+
+## 🌐 Acesso à Aplicação
+
+Após completar todos os passos acima, a aplicação estará disponível em:
+
+**URL:** http://localhost:8000
+
+### Primeiro Acesso
+
+1. Acesse http://localhost:8000
+2. Você será redirecionado para a página de login
+3. Clique em "Registrar" para criar sua primeira conta
+4. Após o registro, você será logado automaticamente
+
+## 📊 Estrutura do Banco de Dados
+
+### Tabelas Criadas pelas Migrations
+
+#### `users` - Usuários do Sistema
+- `id` (BIGINT, PRIMARY KEY)
+- `name` (VARCHAR)
+- `email` (VARCHAR, UNIQUE)
+- `email_verified_at` (TIMESTAMP, NULLABLE)
+- `password` (VARCHAR)
+- `remember_token` (VARCHAR, NULLABLE)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+#### `favorites` - Filmes Favoritados
+- `id` (BIGINT, PRIMARY KEY)
+- `user_id` (BIGINT, FOREIGN KEY → users.id)
+- `tmdb_id` (VARCHAR, INDEX)
+- `title` (VARCHAR)
+- `poster_path` (VARCHAR, NULLABLE)
+- `release_date` (DATE, NULLABLE)
+- `genres` (JSON, NULLABLE)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+**Constraints:**
+- UNIQUE KEY: `(user_id, tmdb_id)` - Impede duplicatas
+- FOREIGN KEY: `user_id` → `users.id` (CASCADE DELETE)
+
+## 🛣️ Rotas Disponíveis
+
+### Rotas Públicas (Sem Autenticação)
+
+| Método | Rota | Controller | Descrição |
+|--------|------|------------|-----------|
+| GET | `/` | - | Redireciona para `/login` |
+| GET | `/login` | `AuthController@showLoginForm` | Exibe formulário de login |
+| POST | `/login` | `AuthController@login` | Processa login |
+| GET | `/register` | `AuthController@showRegisterForm` | Exibe formulário de registro |
+| POST | `/register` | `AuthController@register` | Processa registro |
+
+### Rotas Protegidas (Requer Autenticação)
+
+| Método | Rota | Controller | Descrição | Payload |
+|--------|------|------------|-----------|---------|
+| GET | `/home` | `MovieController@index` | Página inicial com filmes | Query Params: `genre`, `year`, `vote_average_gte`, `sort_by`, `page` |
+| GET | `/search` | `MovieController@search` | Busca filmes | Query Params: `q`, `genre`, `year`, `vote_average_gte`, `sort_by`, `page` |
+| GET | `/favorites` | `MovieController@favorites` | Lista favoritos | Query Params: `genre` |
+| POST | `/favorites/{tmdbId}` | `MovieController@addFavorite` | Adicionar favorito | Nenhum (tmdbId na URL) |
+| DELETE | `/favorites/{id}` | `MovieController@removeFavorite` | Remover favorito | Nenhum (id na URL) |
+| POST | `/logout` | `AuthController@logout` | Logout do usuário | Nenhum |
+
+### Parâmetros de Query Disponíveis
+
+#### Filtros de Filmes
 - `genre` (int): ID do gênero na TMDB
 - `year` (int): Ano de lançamento
-- `vote_average_gte` (float): Nota mínima
-- `sort_by` (string): Ordenação (popularity.desc, vote_average.desc, etc.)
-- `page` (int): Página da paginação
+- `vote_average_gte` (float): Nota mínima (0.0 - 10.0)
+- `sort_by` (string): Ordenação
+  - `popularity.desc` (padrão)
+  - `vote_average.desc`
+  - `release_date.desc`
+  - `title.asc`
+- `page` (int): Página da paginação (padrão: 1)
 
-**Retorno:** View `movies.home` com dados dos filmes
+#### Busca
+- `q` (string): Termo de busca por nome do filme
 
-#### `search(Request $request): View`
-Busca filmes por nome ou aplica filtros avançados.
+## 🛠️ Comandos Úteis para Desenvolvimento
 
-**Parâmetros:**
-- `$request` (Request): Requisição HTTP
+### Gerenciamento de Containers
 
-**Parâmetros de busca:**
-- `q` (string): Termo de busca (opcional)
-- `genre`, `year`, `vote_average_gte`, `sort_by`, `page`: Mesmo que index()
+```bash
+# Ver status dos containers
+docker-compose ps
 
-**Lógica:**
-- Se `q` estiver presente: busca por nome
-- Se `q` estiver vazio mas filtros presentes: usa discover API
-- Caso contrário: redireciona para home
+# Ver logs da aplicação
+docker-compose logs app
 
-**Retorno:** View `movies.search` com resultados
+# Ver logs do banco de dados
+docker-compose logs db
 
-#### `favorites(Request $request): View|JsonResponse`
-Exibe ou retorna lista de filmes favoritos do usuário.
+# Parar todos os containers
+docker-compose down
 
-**Parâmetros:**
-- `$request` (Request): Requisição HTTP
+# Parar e remover volumes
+docker-compose down -v
 
-**Filtros suportados:**
-- `genre` (string): Nome do gênero para filtrar
-
-**Retorno:**
-- HTML: View `movies.favorites`
-- JSON (AJAX): Lista de favoritos para verificação de estado
-
-#### `addFavorite(string $tmdbId): JsonResponse`
-Adiciona um filme aos favoritos via AJAX.
-
-**Parâmetros:**
-- `$tmdbId` (string): ID do filme na TMDB
-
-**Processo:**
-1. Verifica se já está favoritado
-2. Busca detalhes na API TMDB
-3. Cria registro no banco
-4. Retorna resposta JSON
-
-**Respostas possíveis:**
-- Sucesso: `{"success": true, "message": "...", "favorite_id": 123}`
-- Já favoritado: `{"success": false, "message": "..."}` (400)
-- Erro na API: `{"success": false, "message": "..."}` (500)
-
-#### `removeFavorite(int $id): JsonResponse`
-Remove um filme dos favoritos via AJAX.
-
-**Parâmetros:**
-- `$id` (int): ID do registro de favorito
-
-**Processo:**
-1. Busca favorito do usuário atual
-2. Remove registro do banco
-3. Retorna resposta JSON
-
-**Respostas possíveis:**
-- Sucesso: `{"success": true, "message": "..."}`
-- Não encontrado: `{"success": false, "message": "..."}` (404)
-
----
-
-## Service: TmdbService
-
-### Descrição
-Serviço responsável pela integração com a API do The Movie Database (TMDB).
-
-### Localização
-`app/Services/TmdbService.php`
-
-### Configuração
-- `TMDB_API_KEY`: Chave da API (configurada em `.env`)
-- `baseUrl`: `https://api.themoviedb.org/3`
-- `imageBaseUrl`: `https://image.tmdb.org/t/p/w500`
-
-### Métodos
-
-#### `searchMovies(string $query, int $page = 1): array|null`
-Busca filmes por termo de pesquisa.
-
-#### `getMovieDetails(string $movieId): array|null`
-Obtém detalhes completos de um filme específico.
-
-#### `getGenres(): array`
-Retorna lista de gêneros disponíveis.
-
-#### `getImageUrl(string $path): string`
-Gera URL completa para imagem do TMDB.
-
-#### `getPopularMovies(int $page = 1): array|null`
-Obtém filmes populares.
-
-#### `discoverMovies(array $filters, int $page = 1): array|null`
-Descobre filmes com filtros avançados.
-
-**Filtros suportados:**
-- `genre` (int): ID do gênero
-- `year` (int): Ano de lançamento
-- `vote_average_gte` (float): Nota mínima
-- `vote_average_lte` (float): Nota máxima
-- `sort_by` (string): Critério de ordenação
-
----
-
-## Views
-
-### Estrutura de Views
-```
-resources/views/
-├── layouts/
-│   └── app.blade.php          # Layout principal
-├── auth/
-│   ├── login.blade.php        # Formulário de login
-│   └── register.blade.php     # Formulário de registro
-└── movies/
-    ├── home.blade.php         # Página inicial
-    ├── search.blade.php       # Resultados de busca
-    └── favorites.blade.php    # Lista de favoritos
+# Reiniciar containers
+docker-compose restart
 ```
 
-### Funcionalidades das Views
+### Comandos Laravel dentro do Container
 
-#### Layout Principal (`layouts/app.blade.php`)
-- Navbar com navegação e busca integrada
-- Sistema de toasts para notificações
-- JavaScript para gerenciamento de favoritos
-- Design responsivo profissional
+```bash
+# Acessar o container da aplicação
+docker-compose exec app bash
 
-#### Páginas de Filmes
-- Cards com posters, títulos e informações
-- Modais para detalhes completos
-- Sistema de paginação
-- Filtros avançados (home/search)
-- Botões de favoritar com estados visuais
-
----
-
-## API Endpoints
-
-### Rotas Públicas
-```
-GET  /           -> MovieController@index
-GET  /login      -> AuthController@showLoginForm
-POST /login      -> AuthController@login
-GET  /register   -> AuthController@showRegisterForm
-POST /register   -> AuthController@register
+# Dentro do container, executar comandos Laravel
+php artisan migrate:status
+php artisan migrate:rollback
+php artisan tinker
+php artisan cache:clear
+php artisan config:clear
+php artisan route:list
 ```
 
-### Rotas Protegidas (middleware: auth)
+### Backup e Restauração do Banco
+
+```bash
+# Criar backup do banco
+docker-compose exec db pg_dump -U laravel -d laravel > backup.sql
+
+# Restaurar backup
+docker-compose exec db psql -U laravel -d laravel < backup.sql
 ```
-GET  /home       -> MovieController@index
-GET  /search     -> MovieController@search
-GET  /favorites  -> MovieController@favorites
-POST /favorites/{tmdbId}  -> MovieController@addFavorite
-DELETE /favorites/{id}    -> MovieController@removeFavorite
-POST /logout     -> AuthController@logout
+
+## 🔧 Solução de Problemas
+
+### Problema: Porta 8000 já está em uso
+
+```bash
+# Alterar a porta no docker-compose.yml
+ports:
+  - "8001:80"  # Mude para outra porta disponível
 ```
 
----
+### Problema: Erro de conexão com o banco
 
-## Tratamento de Erros
+```bash
+# Verificar se o container do banco está rodando
+docker-compose ps
 
-### Validações
-- Autenticação obrigatória para operações de favoritos
-- Verificação de propriedade (usuário só acessa seus favoritos)
-- Validação de dados da API TMDB
+# Ver logs do banco
+docker-compose logs db
 
-### Tratamento de Exceções
-- Erros da API TMDB são logados e retornam respostas amigáveis
-- Falhas de rede são tratadas graciosamente
-- Dados inválidos retornam mensagens de erro apropriadas
+# Reiniciar apenas o banco
+docker-compose restart db
+```
 
----
+### Problema: Erro na API TMDB
 
-## Segurança
+```bash
+# Verificar se a chave TMDB_API_KEY está configurada corretamente
+docker-compose exec app php artisan tinker
+>>> config('services.tmdb.api_key')
+```
 
-### Medidas Implementadas
-- CSRF protection em todos os formulários
-- Autenticação obrigatória para operações sensíveis
-- Sanitização de dados de entrada
-- Validação de ownership (usuário só acessa seus dados)
+### Problema: Permissões de arquivo
 
-### Proteções Adicionais
-- Rate limiting pode ser implementado no futuro
-- Logs de segurança para tentativas suspeitas
-- Validação de tokens de API
+```bash
+# Corrigir permissões dentro do container
+docker-compose exec app chown -R www-data:www-data /var/www/html/storage
+docker-compose exec app chmod -R 755 /var/www/html/storage
+```
 
----
+## 📝 Notas Adicionais
 
-## Performance
+- **TMDB API Key**: A chave fornecida é para desenvolvimento. Para produção, obtenha sua própria chave em [TMDB API](https://www.themoviedb.org/settings/api)
+- **Portas**: A aplicação roda na porta 8000. Certifique-se de que ela esteja disponível
+- **Volumes**: O volume `postgres_data` persiste os dados do banco entre reinicializações
+- **Performance**: Para melhor performance em desenvolvimento, considere usar volumes para `vendor/` e `node_modules/`
 
-### Otimizações
-- Paginação em todas as listagens
-- Cache de imagens do TMDB
-- Queries otimizadas com índices apropriados
-- Lazy loading de relacionamentos
+## 🎯 Próximos Passos
 
-### Considerações
-- API TMDB tem limites de requisições
-- Implementar cache local para reduzir chamadas à API
-- Compressão de imagens para melhor performance
+Após a instalação bem-sucedida:
 
----
-
-## Testes
-
-### Casos de Teste Sugeridos
-- Autenticação e autorização
-- CRUD de favoritos
-- Integração com API TMDB
-- Validação de formulários
-- Tratamento de erros
-- Performance com grandes volumes de dados
+1. **Explore a aplicação**: Navegue pelas páginas e teste as funcionalidades
+2. **Personalize**: Modifique estilos, adicione funcionalidades
+3. **Teste**: Execute `php artisan test` para rodar os testes
+4. **Deploy**: Configure para produção quando estiver pronto
 
 ---
 
-## Manutenção
-
-### Tarefas Periódicas
-- Atualização da chave da API TMDB
-- Limpeza de logs antigos
-- Backup de dados
-- Monitoramento de performance
-
-### Monitoramento
-- Logs de erro da aplicação
-- Monitoramento de uso da API TMDB
-- Análise de performance das queries
-- Verificação de disponibilidade dos serviços externos
+**🎬 Movie Manager - Pronto para uso!**
