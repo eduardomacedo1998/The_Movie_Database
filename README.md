@@ -1,66 +1,312 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Guia de Instalação e Execução - Movie Manager
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 📋 Visão Geral
 
-## About Laravel
+Este documento fornece instruções completas para configurar e executar o Movie Manager localmente utilizando Docker e Docker Compose.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🐳 Pré-requisitos
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Antes de começar, certifique-se de ter instalado em sua máquina:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Docker** (versão 20.10 ou superior)
+- **Docker Compose** (versão 1.29 ou superior)
+- **Git** (para clonar o repositório)
 
-## Learning Laravel
+### Verificar Instalação
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```bash
+# Verificar Docker
+docker --version
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# Verificar Docker Compose
+docker-compose --version
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🚀 Instalação e Configuração
 
-## Laravel Sponsors
+### Passo 1: Clonar o Repositório
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+```bash
+git clone https://github.com/eduardomacedo1998/The_Movie_Database.git
+cd The_Movie_Database
+```
 
-### Premium Partners
+### Passo 2: Configurar Variáveis de Ambiente
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+1. Copie o arquivo de exemplo para criar seu `.env`:
 
-## Contributing
+```bash
+cp .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+2. Configure as seguintes variáveis no arquivo `.env`:
 
-## Code of Conduct
+```env
+# Configurações da Aplicação
+APP_NAME="Movie Manager"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Chave da Aplicação (será gerada automaticamente)
+APP_KEY=
 
-## Security Vulnerabilities
+# Configurações do Banco de Dados PostgreSQL
+DB_CONNECTION=pgsql
+DB_HOST=db
+DB_PORT=5432
+DB_DATABASE=laravel
+DB_USERNAME=laravel
+DB_PASSWORD=password
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Chave da API TMDB (OBRIGATÓRIA)
+TMDB_API_KEY=03474f2e15580abb4ad3ddf6ef7b09bc
+```
 
-## License
+> **⚠️ IMPORTANTE:** A chave TMDB `03474f2e15580abb4ad3ddf6ef7b09bc` já está configurada no arquivo `.env` fornecido.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Passo 3: Instalar Dependências do Composer
+
+Antes de construir os containers, instale as dependências PHP do projeto:
+
+```bash
+# Instalar dependências do Composer
+composer install --no-dev --optimize-autoloader
+```
+
+Este comando irá:
+- Baixar e instalar todas as dependências PHP listadas no `composer.json`
+- Otimizar o autoloader para melhor performance
+- Preparar o projeto para execução
+
+### Passo 4: Construir e Iniciar os Containers
+
+```bash
+# Construir e iniciar todos os serviços
+docker-compose up --build -d
+```
+
+Este comando irá:
+- Construir a imagem da aplicação Laravel
+- Iniciar o container da aplicação na porta 8000
+- Iniciar o container PostgreSQL na porta 5432
+- Criar volumes persistentes para o banco de dados
+
+### Passo 5: Gerar Chave da Aplicação
+
+Após os containers estarem rodando, execute o comando para gerar a chave da aplicação:
+
+```bash
+# Acessar o container da aplicação
+docker-compose exec app php artisan key:generate
+```
+
+### Passo 6: Configurar o Banco de Dados
+
+#### Opção A: Executar Migrations (Recomendado)
+
+```bash
+# Executar migrations para criar as tabelas
+docker-compose exec app php artisan migrate
+```
+
+
+```
+
+### Passo 7: Executar Seeds (Opcional)
+
+Se desejar popular o banco com dados de exemplo:
+
+```bash
+# Executar seeds
+docker-compose exec app php artisan db:seed
+```
+
+## 🌐 Acesso à Aplicação
+
+Após completar todos os passos acima, a aplicação estará disponível em:
+
+**URL:** http://localhost:8000
+
+### Primeiro Acesso
+
+1. Acesse http://localhost:8000
+2. Você será redirecionado para a página de login
+3. Clique em "Registrar" para criar sua primeira conta
+4. Após o registro, você será logado automaticamente
+
+## 📊 Estrutura do Banco de Dados
+
+### Tabelas Criadas pelas Migrations
+
+#### `users` - Usuários do Sistema
+- `id` (BIGINT, PRIMARY KEY)
+- `name` (VARCHAR)
+- `email` (VARCHAR, UNIQUE)
+- `email_verified_at` (TIMESTAMP, NULLABLE)
+- `password` (VARCHAR)
+- `remember_token` (VARCHAR, NULLABLE)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+#### `favorites` - Filmes Favoritados
+- `id` (BIGINT, PRIMARY KEY)
+- `user_id` (BIGINT, FOREIGN KEY → users.id)
+- `tmdb_id` (VARCHAR, INDEX)
+- `title` (VARCHAR)
+- `poster_path` (VARCHAR, NULLABLE)
+- `release_date` (DATE, NULLABLE)
+- `genres` (JSON, NULLABLE)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+**Constraints:**
+- UNIQUE KEY: `(user_id, tmdb_id)` - Impede duplicatas
+- FOREIGN KEY: `user_id` → `users.id` (CASCADE DELETE)
+
+## 🛣️ Rotas Disponíveis
+
+### Rotas Públicas (Sem Autenticação)
+
+| Método | Rota | Controller | Descrição |
+|--------|------|------------|-----------|
+| GET | `/` | - | Redireciona para `/login` |
+| GET | `/login` | `AuthController@showLoginForm` | Exibe formulário de login |
+| POST | `/login` | `AuthController@login` | Processa login |
+| GET | `/register` | `AuthController@showRegisterForm` | Exibe formulário de registro |
+| POST | `/register` | `AuthController@register` | Processa registro |
+
+### Rotas Protegidas (Requer Autenticação)
+
+| Método | Rota | Controller | Descrição | Payload |
+|--------|------|------------|-----------|---------|
+| GET | `/home` | `MovieController@index` | Página inicial com filmes | Query Params: `genre`, `year`, `vote_average_gte`, `sort_by`, `page` |
+| GET | `/search` | `MovieController@search` | Busca filmes | Query Params: `q`, `genre`, `year`, `vote_average_gte`, `sort_by`, `page` |
+| GET | `/favorites` | `MovieController@favorites` | Lista favoritos | Query Params: `genre` |
+| POST | `/favorites/{tmdbId}` | `MovieController@addFavorite` | Adicionar favorito | Nenhum (tmdbId na URL) |
+| DELETE | `/favorites/{id}` | `MovieController@removeFavorite` | Remover favorito | Nenhum (id na URL) |
+| POST | `/logout` | `AuthController@logout` | Logout do usuário | Nenhum |
+
+### Parâmetros de Query Disponíveis
+
+#### Filtros de Filmes
+- `genre` (int): ID do gênero na TMDB
+- `year` (int): Ano de lançamento
+- `vote_average_gte` (float): Nota mínima (0.0 - 10.0)
+- `sort_by` (string): Ordenação
+  - `popularity.desc` (padrão)
+  - `vote_average.desc`
+  - `release_date.desc`
+  - `title.asc`
+- `page` (int): Página da paginação (padrão: 1)
+
+#### Busca
+- `q` (string): Termo de busca por nome do filme
+
+## 🛠️ Comandos Úteis para Desenvolvimento
+
+### Gerenciamento de Containers
+
+```bash
+# Ver status dos containers
+docker-compose ps
+
+# Ver logs da aplicação
+docker-compose logs app
+
+# Ver logs do banco de dados
+docker-compose logs db
+
+# Parar todos os containers
+docker-compose down
+
+# Parar e remover volumes
+docker-compose down -v
+
+# Reiniciar containers
+docker-compose restart
+```
+
+### Comandos Laravel dentro do Container
+
+```bash
+# Acessar o container da aplicação
+docker-compose exec app bash
+
+# Dentro do container, executar comandos Laravel
+php artisan migrate:status
+php artisan migrate:rollback
+php artisan tinker
+php artisan cache:clear
+php artisan config:clear
+php artisan route:list
+```
+
+### Backup e Restauração do Banco
+
+```bash
+# Criar backup do banco
+docker-compose exec db pg_dump -U laravel -d laravel > backup.sql
+
+# Restaurar backup
+docker-compose exec db psql -U laravel -d laravel < backup.sql
+```
+
+## 🔧 Solução de Problemas
+
+### Problema: Porta 8000 já está em uso
+
+```bash
+# Alterar a porta no docker-compose.yml
+ports:
+  - "8001:80"  # Mude para outra porta disponível
+```
+
+### Problema: Erro de conexão com o banco
+
+```bash
+# Verificar se o container do banco está rodando
+docker-compose ps
+
+# Ver logs do banco
+docker-compose logs db
+
+# Reiniciar apenas o banco
+docker-compose restart db
+```
+
+### Problema: Erro na API TMDB
+
+```bash
+# Verificar se a chave TMDB_API_KEY está configurada corretamente
+docker-compose exec app php artisan tinker
+>>> config('services.tmdb.api_key')
+```
+
+### Problema: Permissões de arquivo
+
+```bash
+# Corrigir permissões dentro do container
+docker-compose exec app chown -R www-data:www-data /var/www/html/storage
+docker-compose exec app chmod -R 755 /var/www/html/storage
+```
+
+## 📝 Notas Adicionais
+
+- **TMDB API Key**: A chave fornecida é para desenvolvimento. Para produção, obtenha sua própria chave em [TMDB API](https://www.themoviedb.org/settings/api)
+- **Portas**: A aplicação roda na porta 8000. Certifique-se de que ela esteja disponível
+- **Volumes**: O volume `postgres_data` persiste os dados do banco entre reinicializações
+- **Performance**: Para melhor performance em desenvolvimento, considere usar volumes para `vendor/` e `node_modules/`
+
+## 🎯 Próximos Passos
+
+Após a instalação bem-sucedida:
+
+1. **Explore a aplicação**: Navegue pelas páginas e teste as funcionalidades
+2. **Personalize**: Modifique estilos, adicione funcionalidades
+3. **Teste**: Execute `php artisan test` para rodar os testes
+4. **Deploy**: Configure para produção quando estiver pronto
+
+---
+
+**🎬 Movie Manager - Pronto para uso!**
