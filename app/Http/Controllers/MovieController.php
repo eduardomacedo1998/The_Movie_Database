@@ -27,12 +27,12 @@ class MovieController extends Controller
         // Verificar se há filtros aplicados
         $hasFilters = $request->hasAny(['genre', 'year', 'vote_average_gte', 'sort_by']);
 
-        if ($hasFilters) {
+        if ($hasFilters) {// Usar discover com filtros
             $filters = [
-                'genre' => $request->input('genre'),
-                'year' => $request->input('year'),
-                'vote_average_gte' => $request->input('vote_average_gte'),
-                'sort_by' => $request->input('sort_by', 'popularity.desc'),
+                'genre' => $request->input('genre'), // Gênero
+                'year' => $request->input('year'), // Ano de lançamento
+                'vote_average_gte' => $request->input('vote_average_gte'), // Nota mínima
+                'sort_by' => $request->input('sort_by', 'popularity.desc'), // Ordenação
             ];
             $movies = $this->tmdbService->discoverMovies($filters, $page);
         } else {
