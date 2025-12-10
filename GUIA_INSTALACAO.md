@@ -60,10 +60,10 @@ DB_USERNAME=laravel
 DB_PASSWORD=password
 
 # Chave da API TMDB (OBRIGATÓRIA)
-TMDB_API_KEY=03474f2e15580abb4ad3ddf6ef7b09bc
+TMDB_API_KEY=xxxxxxx
 ```
 
-> **⚠️ IMPORTANTE:** A chave TMDB `03474f2e15580abb4ad3ddf6ef7b09bc` já está configurada no arquivo `.env` fornecido.
+> **⚠️ IMPORTANTE:** A chave TMDB `xxxxxxxx` já está configurada no arquivo `.env` fornecido.
 
 ### Passo 3: Instalar Dependências do Composer
 
