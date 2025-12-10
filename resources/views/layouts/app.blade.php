@@ -16,12 +16,16 @@
             padding-bottom: 50px;
         }
         .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .navbar-brand {
             font-weight: 700;
             font-size: 1.5rem;
+            color: #ecf0f1 !important;
+        }
+        .navbar-brand:hover {
+            color: #3498db !important;
         }
         .search-form {
             max-width: 500px;
@@ -29,13 +33,13 @@
         .movie-card {
             transition: transform 0.3s, box-shadow 0.3s;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             overflow: hidden;
             height: 100%;
         }
         .movie-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         .movie-poster {
             width: 100%;
@@ -43,19 +47,20 @@
             object-fit: cover;
         }
         .movie-title {
-            font-weight: 700;
+            font-weight: 600;
             font-size: 1rem;
             height: 48px;
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
+            color: #2c3e50;
         }
         .btn-favorite {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border: none;
             width: 40px;
             height: 40px;
@@ -66,13 +71,14 @@
             cursor: pointer;
             transition: all 0.3s;
             z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .btn-favorite:hover {
             background: white;
             transform: scale(1.1);
         }
         .btn-favorite.active {
-            background: #dc3545;
+            background: #e74c3c;
             color: white;
         }
         .rating-badge {
@@ -80,16 +86,43 @@
             bottom: 10px;
             left: 10px;
             background: rgba(0, 0, 0, 0.8);
-            color: #ffc107;
+            color: #f39c12;
             padding: 5px 10px;
             border-radius: 20px;
             font-weight: 700;
+            font-size: 0.85rem;
         }
         .toast-container {
             position: fixed;
             top: 80px;
             right: 20px;
             z-index: 9999;
+        }
+        .btn-primary {
+            background: #3498db;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+        .card {
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+        }
+        .card-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e8ed;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        .text-muted {
+            color: #6c757d !important;
         }
     </style>
     @yield('styles')
@@ -99,7 +132,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
-                🎬 Movie Manager
+                Movie Manager
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -113,7 +146,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('movies.favorites') ? 'active' : '' }}" href="{{ route('movies.favorites') }}">
-                            <i class="fas fa-heart"></i> Meus Favoritos
+                            <i class="fas fa-heart"></i> Favoritos
                         </a>
                     </li>
                 </ul>

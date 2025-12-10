@@ -9,7 +9,7 @@
     <style>
         body {
             font-family: 'Nunito', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fa;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -22,13 +22,13 @@
         }
         .card {
             border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2c3e50;
             color: white;
-            border-radius: 15px 15px 0 0 !important;
+            border-radius: 8px 8px 0 0 !important;
             padding: 25px;
             text-align: center;
         }
@@ -36,27 +36,30 @@
             padding: 35px;
         }
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
         }
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #3498db;
             border: none;
             padding: 12px;
             font-weight: 600;
-            transition: transform 0.2s;
+            transition: all 0.3s;
         }
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            background: #2980b9;
+            transform: translateY(-1px);
         }
         .form-label {
             font-weight: 600;
-            color: #495057;
+            color: #2c3e50;
             margin-bottom: 8px;
         }
         .alert {
-            border-radius: 10px;
+            border-radius: 6px;
+        }
+        .navbar-brand {
+            color: #ecf0f1 !important;
         }
     </style>
 </head>
@@ -64,8 +67,8 @@
     <div class="login-container">
         <div class="card">
             <div class="card-header">
-                <h3 class="mb-0">🎬 Movie Manager</h3>
-                <p class="mb-0 mt-2 small">Faça login para continuar</p>
+                <h3 class="mb-0">Movie Manager</h3>
+                <p class="mb-0 mt-2 small">Acesse sua conta</p>
             </div>
             <div class="card-body">
                 @if ($errors->any())
@@ -123,9 +126,9 @@
                     </div>
 
                     <div class="text-center">
-                        <p class="mb-0">Não tem uma conta? 
+                        <p class="mb-0">Não possui uma conta? 
                             <a href="{{ route('register') }}" class="text-decoration-none fw-bold">
-                                Registre-se
+                                Criar conta
                             </a>
                         </p>
                     </div>

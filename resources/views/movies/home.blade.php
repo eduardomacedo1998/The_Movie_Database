@@ -6,9 +6,97 @@
 <div class="row mb-4">
     <div class="col-12">
         <h2 class="fw-bold mb-3">
-            <i class="fas fa-fire text-danger"></i> Filmes Populares
+            <i class="fas fa-film text-primary"></i> Catálogo de Filmes
         </h2>
-        <p class="text-muted">Descubra os filmes mais populares do momento</p>
+        <p class="text-muted">Explore nossa coleção completa de filmes</p>
+    </div>
+</div>
+
+<!-- Filtros Avançados -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">
+            <i class="fas fa-filter"></i> Filtros Avançados
+            <button class="btn btn-sm btn-link float-end" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </h5>
+    </div>
+    <div class="collapse {{ !empty($filters['genre']) || !empty($filters['year']) || !empty($filters['vote_average_gte']) || !empty($filters['sort_by']) ? 'show' : '' }}" id="filterCollapse">
+        <div class="card-body">
+            <form method="GET" action="{{ route('home') }}" id="filterForm">
+                <div class="row g-3">
+                    <!-- Filtro por Gênero -->
+                    <div class="col-md-3">
+                        <label for="genre" class="form-label">Gênero</label>
+                        <select name="genre" id="genre" class="form-select">
+                            <option value="">Todos os Gêneros</option>
+                            @foreach($genres as $genre)
+                                <option value="{{ $genre['id'] }}" {{ ($filters['genre'] ?? '') == $genre['id'] ? 'selected' : '' }}>
+                                    {{ $genre['name'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Ano -->
+                    <div class="col-md-3">
+                        <label for="year" class="form-label">Ano de Lançamento</label>
+                        <select name="year" id="year" class="form-select">
+                            <option value="">Todos os Anos</option>
+                            @for($y = date('Y'); $y >= 1990; $y--)
+                                <option value="{{ $y }}" {{ ($filters['year'] ?? '') == $y ? 'selected' : '' }}>
+                                    {{ $y }}
+                                </option>
+                            @endfor
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Nota Mínima -->
+                    <div class="col-md-3">
+                        <label for="vote_average_gte" class="form-label">Nota Mínima</label>
+                        <select name="vote_average_gte" id="vote_average_gte" class="form-select">
+                            <option value="">Qualquer Nota</option>
+                            @for($i = 9; $i >= 5; $i--)
+                                <option value="{{ $i }}" {{ ($filters['vote_average_gte'] ?? '') == $i ? 'selected' : '' }}>
+                                    {{ $i }}+ ⭐
+                                </option>
+                            @endfor
+                        </select>
+                    </div>
+
+                    <!-- Ordenação -->
+                    <div class="col-md-3">
+                        <label for="sort_by" class="form-label">Ordenar Por</label>
+                        <select name="sort_by" id="sort_by" class="form-select">
+                            <option value="popularity.desc" {{ ($filters['sort_by'] ?? '') == 'popularity.desc' ? 'selected' : '' }}>
+                                Mais Popular
+                            </option>
+                            <option value="vote_average.desc" {{ ($filters['sort_by'] ?? '') == 'vote_average.desc' ? 'selected' : '' }}>
+                                Melhor Avaliação
+                            </option>
+                            <option value="release_date.desc" {{ ($filters['sort_by'] ?? '') == 'release_date.desc' ? 'selected' : '' }}>
+                                Mais Recente
+                            </option>
+                            <option value="release_date.asc" {{ ($filters['sort_by'] ?? '') == 'release_date.asc' ? 'selected' : '' }}>
+                                Mais Antigo
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Aplicar Filtros
+                        </button>
+                        <a href="{{ route('home') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Limpar Filtros
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -70,7 +158,7 @@
     <div class="modal fade" id="movieModal{{ $movie['id'] }}" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="modal-header" style="background: #2c3e50; color: white;">
                     <h5 class="modal-title">{{ $movie['title'] }}</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -126,9 +214,48 @@
     </div>
     @endforeach
 </div>
+
+<!-- Paginação -->
+@if(($totalPages ?? 1) > 1)
+<div class="row mt-5">
+    <div class="col-12">
+        <nav>
+            <ul class="pagination justify-content-center">
+                <!-- Botão Anterior -->
+                @if(($currentPage ?? 1) > 1)
+                <li class="page-item">
+                    <a class="page-link" href="{{ route('home', array_merge($filters ?? [], ['page' => ($currentPage ?? 1) - 1])) }}">
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </a>
+                </li>
+                @endif
+
+                <!-- Páginas -->
+                @for($i = max(1, ($currentPage ?? 1) - 2); $i <= min(($totalPages ?? 1), ($currentPage ?? 1) + 2); $i++)
+                <li class="page-item {{ $i == ($currentPage ?? 1) ? 'active' : '' }}">
+                    <a class="page-link" href="{{ route('home', array_merge($filters ?? [], ['page' => $i])) }}">
+                        {{ $i }}
+                    </a>
+                </li>
+                @endfor
+
+                <!-- Botão Próximo -->
+                @if(($currentPage ?? 1) < ($totalPages ?? 1))
+                <li class="page-item">
+                    <a class="page-link" href="{{ route('home', array_merge($filters ?? [], ['page' => ($currentPage ?? 1) + 1])) }}">
+                        Próximo <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                @endif
+            </ul>
+        </nav>
+    </div>
+</div>
+@endif
+
 @else
 <div class="alert alert-info text-center">
-    <i class="fas fa-info-circle"></i> Nenhum filme encontrado.
+    <i class="fas fa-info-circle"></i> Nenhum filme encontrado com os filtros aplicados.
 </div>
 @endif
 @endsection

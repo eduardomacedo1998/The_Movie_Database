@@ -17,33 +17,72 @@ class MovieController extends Controller
     }
 
     /**
-     * Página inicial - exibe filmes populares
+     * Página inicial - exibe filmes populares ou filtrados
      */
-    public function index()
+    public function index(Request $request)
     {
-        $popularMovies = $this->tmdbService->getPopularMovies();
         $genres = $this->tmdbService->getGenres();
+        $page = $request->input('page', 1);
+
+        // Verificar se há filtros aplicados
+        $hasFilters = $request->hasAny(['genre', 'year', 'vote_average_gte', 'sort_by']);
+
+        if ($hasFilters) {
+            $filters = [
+                'genre' => $request->input('genre'),
+                'year' => $request->input('year'),
+                'vote_average_gte' => $request->input('vote_average_gte'),
+                'sort_by' => $request->input('sort_by', 'popularity.desc'),
+            ];
+            $movies = $this->tmdbService->discoverMovies($filters, $page);
+        } else {
+            $movies = $this->tmdbService->getPopularMovies($page);
+        }
 
         return view('movies.home', [
-            'movies' => $popularMovies['results'] ?? [],
+            'movies' => $movies['results'] ?? [],
             'genres' => $genres,
+            'totalPages' => $movies['total_pages'] ?? 1,
+            'currentPage' => $page,
+            'filters' => $request->only(['genre', 'year', 'vote_average_gte', 'sort_by']),
         ]);
     }
 
     /**
-     * Busca filmes por nome
+     * Busca filmes por nome ou com filtros
      */
     public function search(Request $request)
     {
         $query = $request->input('q');
         $page = $request->input('page', 1);
+        $genres = $this->tmdbService->getGenres();
+
+        // Se não há query, mas há filtros, usar discover
+        if (empty($query) && $request->hasAny(['genre', 'year', 'vote_average_gte', 'sort_by'])) {
+            $filters = [
+                'genre' => $request->input('genre'),
+                'year' => $request->input('year'),
+                'vote_average_gte' => $request->input('vote_average_gte'),
+                'sort_by' => $request->input('sort_by', 'popularity.desc'),
+            ];
+            $searchResults = $this->tmdbService->discoverMovies($filters, $page);
+            
+            return view('movies.search', [
+                'movies' => $searchResults['results'] ?? [],
+                'query' => '',
+                'totalResults' => $searchResults['total_results'] ?? 0,
+                'currentPage' => $page,
+                'totalPages' => $searchResults['total_pages'] ?? 1,
+                'genres' => $genres,
+                'filters' => $request->only(['genre', 'year', 'vote_average_gte', 'sort_by']),
+            ]);
+        }
 
         if (empty($query)) {
             return redirect()->route('home');
         }
 
         $searchResults = $this->tmdbService->searchMovies($query, $page);
-        $genres = $this->tmdbService->getGenres();
 
         return view('movies.search', [
             'movies' => $searchResults['results'] ?? [],
@@ -52,6 +91,7 @@ class MovieController extends Controller
             'currentPage' => $page,
             'totalPages' => $searchResults['total_pages'] ?? 1,
             'genres' => $genres,
+            'filters' => [],
         ]);
     }
 

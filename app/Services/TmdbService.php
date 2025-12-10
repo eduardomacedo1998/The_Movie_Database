@@ -119,4 +119,51 @@ class TmdbService
             return null;
         }
     }
+
+    /**
+     * Descobre filmes com filtros avançados
+     */
+    public function discoverMovies($filters = [], $page = 1)
+    {
+        try {
+            $params = [
+                'api_key' => $this->apiKey,
+                'language' => 'pt-BR',
+                'page' => $page,
+                'sort_by' => $filters['sort_by'] ?? 'popularity.desc',
+            ];
+
+            // Filtro por gênero
+            if (!empty($filters['genre'])) {
+                $params['with_genres'] = $filters['genre'];
+            }
+
+            // Filtro por ano
+            if (!empty($filters['year'])) {
+                $params['primary_release_year'] = $filters['year'];
+            }
+
+            // Filtro por nota mínima
+            if (!empty($filters['vote_average_gte'])) {
+                $params['vote_average.gte'] = $filters['vote_average_gte'];
+            }
+
+            // Filtro por nota máxima
+            if (!empty($filters['vote_average_lte'])) {
+                $params['vote_average.lte'] = $filters['vote_average_lte'];
+            }
+
+            $response = Http::get("{$this->baseUrl}/discover/movie", $params);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Erro ao descobrir filmes: ' . $e->getMessage());
+            return null;
+        }
+    }
 }
+

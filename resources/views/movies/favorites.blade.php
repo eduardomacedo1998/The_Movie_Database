@@ -6,7 +6,7 @@
 <div class="row mb-4">
     <div class="col-12 col-md-8">
         <h2 class="fw-bold mb-3">
-            <i class="fas fa-heart text-danger"></i> Meus Favoritos
+            <i class="fas fa-heart text-danger"></i> Minha Lista de Favoritos
         </h2>
         <p class="text-muted">
             @if(count($favorites) > 0)
@@ -101,7 +101,7 @@
     <div class="modal fade" id="favoriteModal{{ $favorite->id }}" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="modal-header" style="background: #2c3e50; color: white;">
                     <h5 class="modal-title">{{ $favorite->title }}</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -181,11 +181,11 @@
                 <i class="fas fa-times"></i> Limpar Filtro
             </a>
         @else
-            Comece a adicionar filmes aos seus favoritos para vê-los aqui!
+            Adicione filmes aos seus favoritos para visualizá-los aqui.
         @endif
     </p>
     <a href="{{ route('home') }}" class="btn btn-primary">
-        <i class="fas fa-search"></i> Buscar Filmes
+        <i class="fas fa-search"></i> Explorar Catálogo
     </a>
 </div>
 @endif
