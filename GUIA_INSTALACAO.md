@@ -65,7 +65,21 @@ TMDB_API_KEY=03474f2e15580abb4ad3ddf6ef7b09bc
 
 > **⚠️ IMPORTANTE:** A chave TMDB `03474f2e15580abb4ad3ddf6ef7b09bc` já está configurada no arquivo `.env` fornecido.
 
-### Passo 3: Construir e Iniciar os Containers
+### Passo 3: Instalar Dependências do Composer
+
+Antes de construir os containers, instale as dependências PHP do projeto:
+
+```bash
+# Instalar dependências do Composer
+composer install --no-dev --optimize-autoloader
+```
+
+Este comando irá:
+- Baixar e instalar todas as dependências PHP listadas no `composer.json`
+- Otimizar o autoloader para melhor performance
+- Preparar o projeto para execução
+
+### Passo 4: Construir e Iniciar os Containers
 
 ```bash
 # Construir e iniciar todos os serviços
@@ -78,7 +92,7 @@ Este comando irá:
 - Iniciar o container PostgreSQL na porta 5432
 - Criar volumes persistentes para o banco de dados
 
-### Passo 4: Gerar Chave da Aplicação
+### Passo 5: Gerar Chave da Aplicação
 
 Após os containers estarem rodando, execute o comando para gerar a chave da aplicação:
 
@@ -87,7 +101,7 @@ Após os containers estarem rodando, execute o comando para gerar a chave da apl
 docker-compose exec app php artisan key:generate
 ```
 
-### Passo 5: Configurar o Banco de Dados
+### Passo 6: Configurar o Banco de Dados
 
 #### Opção A: Executar Migrations (Recomendado)
 
@@ -96,19 +110,10 @@ docker-compose exec app php artisan key:generate
 docker-compose exec app php artisan migrate
 ```
 
-#### Opção B: Importar Dump SQL (Alternativo)
 
-Se você possui um arquivo de dump SQL, pode importá-lo diretamente:
-
-```bash
-# Copiar o arquivo dump.sql para o container do banco
-docker cp dump.sql movie_manager_db:/tmp/dump.sql
-
-# Importar o dump no PostgreSQL
-docker-compose exec db psql -U laravel -d laravel -f /tmp/dump.sql
 ```
 
-### Passo 6: Executar Seeds (Opcional)
+### Passo 7: Executar Seeds (Opcional)
 
 Se desejar popular o banco com dados de exemplo:
 
